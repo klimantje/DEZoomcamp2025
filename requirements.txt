@@ -1,0 +1,7 @@
+pandas
+pgcli
+jupyter 
+pyarrow
+ipykernel
+sqlalchemy
+psycopg2
