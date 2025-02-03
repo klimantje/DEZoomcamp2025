@@ -4,6 +4,7 @@ volumes:
   kestra-data:
     driver: local
 
+
 services:
   devcontainer:
     build: 
@@ -36,6 +37,7 @@ services:
       - kestra-data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/kestra-wd:/tmp/kestra-wd
+      - ./flows:/local_folder/flows
     environment:
       KESTRA_CONFIGURATION: |
         datasources:
@@ -62,6 +64,18 @@ services:
             tmpDir:
               path: /tmp/kestra-wd/tmp
           url: http://localhost:8080/
+          pluginDefaults:
+          - type: io.kestra.plugin.jdbc.postgresql
+            values:
+              url: jdbc:postgresql://postgres:5432
+              username: kestra
+              password: k3str4
+          micronaut:
+            io:
+              watch:
+                enabled: true
+                paths:
+                  - /local_folder/flows
     ports:
       - "8081:8080"
     depends_on:
