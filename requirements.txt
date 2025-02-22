@@ -5,3 +5,6 @@ pyarrow
 ipykernel
 sqlalchemy
 psycopg2
+dlt[duckdb]
+dbt-core
+dbt-postgres
