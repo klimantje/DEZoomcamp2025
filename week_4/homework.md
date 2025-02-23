@@ -5,12 +5,13 @@ For this homework, you will need the following datasets:
 * [Yellow Taxi dataset (2019 and 2020)](https://github.com/DataTalksClub/nyc-tlc-data/releases/tag/yellow)
 * [For Hire Vehicle dataset (2019)](https://github.com/DataTalksClub/nyc-tlc-data/releases/tag/fhv)
 
-### Before you start
+### Setup
 
-1. Make sure you, **at least**, have them in GCS with a External Table **OR** a Native Table - use whichever method you prefer to accomplish that (Workflow Orchestration with [pandas-gbq](https://cloud.google.com/bigquery/docs/samples/bigquery-pandas-gbq-to-gbq-simple), [dlt for gcs](https://dlthub.com/docs/dlt-ecosystem/destinations/filesystem), [dlt for BigQuery](https://dlthub.com/docs/dlt-ecosystem/destinations/bigquery), [gsutil](https://cloud.google.com/storage/docs/gsutil), etc)
-2. You should have exactly `7,778,101` records in your Green Taxi table
-3. You should have exactly `109,047,518` records in your Yellow Taxi table
-4. You should have exactly `43,244,696` records in your FHV table
+Data was loaded with [Kestra](../flows/) into postgres and checked the records:
+
+[x] You should have exactly `7,778,101` records in your Green Taxi table
+[x] You should have exactly `109,047,518` records in your Yellow Taxi table
+[x] You should have exactly `43,244,696` records in your FHV table
 5. Build the staging models for green/yellow as shown in [here](../../../04-analytics-engineering/taxi_rides_ny/models/staging/)
 6. Build the dimension/fact for taxi_trips joining with `dim_zones`  as shown in [here](../../../04-analytics-engineering/taxi_rides_ny/models/core/fact_trips.sql)
 
@@ -43,12 +44,13 @@ What does this .sql model compile to?
 select * 
 from {{ source('raw_nyc_tripdata', 'ext_green_taxi' ) }}
 ```
+Since the first env_var used is set, it will be used in the name, however the second one is a different name and hence will fallback to the default.
 
-- `select * from dtc_zoomcamp_2025.raw_nyc_tripdata.ext_green_taxi`
-- `select * from dtc_zoomcamp_2025.my_nyc_tripdata.ext_green_taxi`
-- `select * from myproject.raw_nyc_tripdata.ext_green_taxi`
-- `select * from myproject.my_nyc_tripdata.ext_green_taxi`
-- `select * from dtc_zoomcamp_2025.raw_nyc_tripdata.green_taxi`
+- [ ] `select * from dtc_zoomcamp_2025.raw_nyc_tripdata.ext_green_taxi`
+- [ ] `select * from dtc_zoomcamp_2025.my_nyc_tripdata.ext_green_taxi`
+- [X] `select * from myproject.raw_nyc_tripdata.ext_green_taxi`
+- [ ] `select * from myproject.my_nyc_tripdata.ext_green_taxi`
+- [ ] `select * from dtc_zoomcamp_2025.raw_nyc_tripdata.green_taxi`
 
 
 ### Question 2: dbt Variables & Dynamic Models
@@ -66,11 +68,11 @@ where pickup_datetime >= CURRENT_DATE - INTERVAL '30' DAY
 
 What would you change to accomplish that in a such way that command line arguments takes precedence over ENV_VARs, which takes precedence over DEFAULT value?
 
-- Add `ORDER BY pickup_datetime DESC` and `LIMIT {{ var("days_back", 30) }}`
-- Update the WHERE clause to `pickup_datetime >= CURRENT_DATE - INTERVAL '{{ var("days_back", 30) }}' DAY`
-- Update the WHERE clause to `pickup_datetime >= CURRENT_DATE - INTERVAL '{{ env_var("DAYS_BACK", "30") }}' DAY`
-- Update the WHERE clause to `pickup_datetime >= CURRENT_DATE - INTERVAL '{{ var("days_back", env_var("DAYS_BACK", "30")) }}' DAY`
-- Update the WHERE clause to `pickup_datetime >= CURRENT_DATE - INTERVAL '{{ env_var("DAYS_BACK", var("days_back", "30")) }}' DAY`
+- [ ] Add `ORDER BY pickup_datetime DESC` and `LIMIT {{ var("days_back", 30) }}`
+- [ ] Update the WHERE clause to `pickup_datetime >= CURRENT_DATE - INTERVAL '{{ var("days_back", 30) }}' DAY`
+- [ ] Update the WHERE clause to `pickup_datetime >= CURRENT_DATE - INTERVAL '{{ env_var("DAYS_BACK", "30") }}' DAY`
+- [X] Update the WHERE clause to `pickup_datetime >= CURRENT_DATE - INTERVAL '{{ var("days_back", env_var("DAYS_BACK", "30")) }}' DAY`
+- [ ] Update the WHERE clause to `pickup_datetime >= CURRENT_DATE - INTERVAL '{{ env_var("DAYS_BACK", var("days_back", "30")) }}' DAY`
 
 
 ### Question 3: dbt Data Lineage and Execution
@@ -81,11 +83,11 @@ Considering the data lineage below **and** that taxi_zone_lookup is the **only**
 
 Select the option that does **NOT** apply for materializing `fct_taxi_monthly_zone_revenue`:
 
-- `dbt run`
-- `dbt run --select +models/core/dim_taxi_trips.sql+ --target prod`
-- `dbt run --select +models/core/fct_taxi_monthly_zone_revenue.sql`
-- `dbt run --select +models/core/`
-- `dbt run --select models/staging/+`
+-  [ ] `dbt run`
+- [ ] `dbt run --select +models/core/dim_taxi_trips.sql+ --target prod`
+- [ ] `dbt run --select +models/core/fct_taxi_monthly_zone_revenue.sql`
+- [ ] `dbt run --select +models/core/`
+- [ ] `dbt run --select models/staging/+`
 
 
 ### Question 4: dbt Macros and Jinja
