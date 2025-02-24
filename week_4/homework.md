@@ -83,11 +83,11 @@ Considering the data lineage below **and** that taxi_zone_lookup is the **only**
 
 Select the option that does **NOT** apply for materializing `fct_taxi_monthly_zone_revenue`:
 
--  [ ] `dbt run`
-- [ ] `dbt run --select +models/core/dim_taxi_trips.sql+ --target prod`
-- [ ] `dbt run --select +models/core/fct_taxi_monthly_zone_revenue.sql`
-- [ ] `dbt run --select +models/core/`
-- [ ] `dbt run --select models/staging/+`
+-  [ ] `dbt run` will run all so also this materialization
+- [ ] `dbt run --select +models/core/dim_taxi_trips.sql+ --target prod` will run all ancestors and children of dim_taxi_trips so also all dependencies needed for the table
+- [ ] `dbt run --select +models/core/fct_taxi_monthly_zone_revenue.sql` will run all ancestors of the fact table 
+- [ ] `dbt run --select +models/core/` will run all ancestors of the core models so also dependencies of this table
+- [X] `dbt run --select models/staging/+` will run staging models and children, but will miss the dim_zone_lookup as dependency
 
 
 ### Question 4: dbt Macros and Jinja

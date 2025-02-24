@@ -8,28 +8,25 @@ inputs:
     type: MULTISELECT
     displayName: Select taxi type
     values: [yellow, green]
-    defaults: [yellow]
+    defaults: [yellow, green]
 
   - id: year
     type: MULTISELECT
     displayName: Select year 
     values: ["2019", "2020"]
-    defaults: ["2019"]
+    defaults: ["2019", "2020"]
 
   - id: month
     type: MULTISELECT
     displayName: Select month
     values: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
-    defaults: ["01"]
+    defaults: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
 
 variables:
-  run_taxi: "{{ parents[1].taskrun.value }}"
-  run_year: "{{ parents[0].taskrun.value }}"
-  run_month: "{{ parent.taskrun.value }}"
-  file: "{{ render(vars.run_taxi) }}_tripdata_{{ render(vars.run_year)}}-{{render(vars.run_month)}}.csv"
-  staging_table: "public.{{render(vars.run_taxi)}}_tripdata_staging"
-  table: "public.{{render(vars.run_taxi)}}_tripdata_dbt"
-  data: "{{outputs.extract.outputFiles[render(vars.run_taxi) ~ '_tripdata_' ~ render(vars.run_year) ~ '-' ~ render(vars.run_month) ~ '.csv']}}"
+  file: "{{ parents[1].taskrun.value }}_tripdata_{{ parents[0].taskrun.value}}-{{taskrun.value}}.csv"
+  staging_table: "public.{{parents[1].taskrun.value}}_tripdata_staging"
+  table: "public.{{parents[1].taskrun.value}}_tripdata_dbt"
+  data: "{{outputs.extract.outputFiles[parents[1].taskrun.value ~ '_tripdata_' ~ parents[0].taskrun.value ~ '-' ~ taskrun.value ~ '.csv']}}"
   
 tasks:
   - id: 1_each_taxi
@@ -54,7 +51,7 @@ tasks:
               type: io.kestra.plugin.core.execution.Labels
               labels:
                 file: "{{render(vars.file)}}"
-                taxi: "{{ render(vars.run_taxi) }}"
+                taxi: "{{ parents[1].taskrun.value }}"
 
             - id: extract
               type: io.kestra.plugin.scripts.shell.Commands
@@ -63,16 +60,16 @@ tasks:
               taskRunner:
                 type: io.kestra.plugin.core.runner.Process
               commands:
-                - wget -qO- https://github.com/DataTalksClub/nyc-tlc-data/releases/download/{{ render(vars.run_taxi)}}/{{render(vars.file)}}.gz | gunzip > {{render(vars.file)}}
+                - wget -qO- https://github.com/DataTalksClub/nyc-tlc-data/releases/download/{{ parents[1].taskrun.value}}/{{render(vars.file)}}.gz | gunzip > {{render(vars.file)}}
 
             - id: if_yellow_taxi
               type: io.kestra.plugin.core.flow.If
-              condition: "{{ render(vars.run_taxi =='yellow') }}"
+              condition: "{{ parents[1].taskrun.value =='yellow' }}"
               then:
                 - id: yellow_create_table
                   type: io.kestra.plugin.jdbc.postgresql.Queries
                   sql: |
-                    CREATE TABLE IF NOT EXISTS {{render(vars.table)}} (
+                    CREATE TABLE IF NOT EXISTS public.yellow_tripdata_dbt (
                         unique_row_id          text,
                         filename               text,
                         VendorID               text,
@@ -98,7 +95,7 @@ tasks:
                 - id: yellow_create_staging_table
                   type: io.kestra.plugin.jdbc.postgresql.Queries
                   sql: |
-                    CREATE TABLE IF NOT EXISTS {{render(vars.staging_table)}} (
+                    CREATE TABLE IF NOT EXISTS public.yellow_tripdata_staging (
                         unique_row_id          text,
                         filename               text,
                         VendorID               text,
@@ -124,20 +121,20 @@ tasks:
                 - id: yellow_truncate_staging_table
                   type: io.kestra.plugin.jdbc.postgresql.Queries
                   sql: |
-                    TRUNCATE TABLE {{render(vars.staging_table)}};
+                    TRUNCATE TABLE public.yellow_tripdata_staging;
 
                 - id: yellow_copy_in_to_staging_table
                   type: io.kestra.plugin.jdbc.postgresql.CopyIn
                   format: CSV
-                  from: "{{render(vars.data)}}"
-                  table: "{{render(vars.staging_table)}}"
+                  from: "{{outputs.extract.outputFiles[yellow ~ '_tripdata_' ~ parents[0].taskrun.value ~ '-' ~ taskrun.value ~ '.csv']}}"
+                  table: "public.yellow_tripdata_staging"
                   header: true
                   columns: [VendorID,tpep_pickup_datetime,tpep_dropoff_datetime,passenger_count,trip_distance,RatecodeID,store_and_fwd_flag,PULocationID,DOLocationID,payment_type,fare_amount,extra,mta_tax,tip_amount,tolls_amount,improvement_surcharge,total_amount,congestion_surcharge]
 
                 - id: yellow_add_unique_id_and_filename
                   type: io.kestra.plugin.jdbc.postgresql.Queries
                   sql: |
-                    UPDATE {{render(vars.staging_table)}}
+                    UPDATE public.yellow_tripdata_staging
                     SET 
                       unique_row_id = md5(
                         COALESCE(CAST(VendorID AS text), '') ||
@@ -153,8 +150,8 @@ tasks:
                 - id: yellow_merge_data
                   type: io.kestra.plugin.jdbc.postgresql.Queries
                   sql: |
-                    MERGE INTO {{render(vars.table)}} AS T
-                    USING {{render(vars.staging_table)}} AS S
+                    MERGE INTO public.yellow_tripdata_dbt AS T
+                    USING public.yellow_tripdata_staging AS S
                     ON T.unique_row_id = S.unique_row_id
                     WHEN NOT MATCHED THEN
                       INSERT (
@@ -172,12 +169,12 @@ tasks:
 
             - id: if_green_taxi
               type: io.kestra.plugin.core.flow.If
-              condition: "{{ render(vars.run_taxi) == 'green'}}"
+              condition: "{{ parents[1].taskrun.value == 'green'}}"
               then:
                 - id: green_create_table
                   type: io.kestra.plugin.jdbc.postgresql.Queries
                   sql: |
-                    CREATE TABLE IF NOT EXISTS {{render(vars.table)}} (
+                    CREATE TABLE IF NOT EXISTS public.green_tripdata_dbt (
                         unique_row_id          text,
                         filename               text,
                         VendorID               text,
@@ -205,7 +202,7 @@ tasks:
                 - id: green_create_staging_table
                   type: io.kestra.plugin.jdbc.postgresql.Queries
                   sql: |
-                    CREATE TABLE IF NOT EXISTS {{render(vars.staging_table)}} (
+                    CREATE TABLE IF NOT EXISTS public.green_tripdata_staging (
                         unique_row_id          text,
                         filename               text,
                         VendorID               text,
@@ -233,20 +230,20 @@ tasks:
                 - id: green_truncate_staging_table
                   type: io.kestra.plugin.jdbc.postgresql.Queries
                   sql: |
-                    TRUNCATE TABLE {{render(vars.staging_table)}};
+                    TRUNCATE TABLE public.green_tripdata_staging;
 
                 - id: green_copy_in_to_staging_table
                   type: io.kestra.plugin.jdbc.postgresql.CopyIn
                   format: CSV
-                  from: "{{render(vars.data)}}"
-                  table: "{{render(vars.staging_table)}}"
+                  from: "{{outputs.extract.outputFiles[yellow ~ '_tripdata_' ~ parents[0].taskrun.value ~ '-' ~ taskrun.value ~ '.csv']}}"
+                  table: "public.green_tripdata_staging"
                   header: true
                   columns: [VendorID,lpep_pickup_datetime,lpep_dropoff_datetime,store_and_fwd_flag,RatecodeID,PULocationID,DOLocationID,passenger_count,trip_distance,fare_amount,extra,mta_tax,tip_amount,tolls_amount,ehail_fee,improvement_surcharge,total_amount,payment_type,trip_type,congestion_surcharge]
 
                 - id: green_add_unique_id_and_filename
                   type: io.kestra.plugin.jdbc.postgresql.Queries
                   sql: |
-                    UPDATE {{render(vars.staging_table)}}
+                    UPDATE public.green_tripdata_staging
                     SET 
                       unique_row_id = md5(
                         COALESCE(CAST(VendorID AS text), '') ||
@@ -262,8 +259,8 @@ tasks:
                 - id: green_merge_data
                   type: io.kestra.plugin.jdbc.postgresql.Queries
                   sql: |
-                    MERGE INTO {{render(vars.table)}} AS T
-                    USING {{render(vars.staging_table)}} AS S
+                    MERGE INTO public.green_tripdata_dbt AS T
+                    USING public.green_tripdata_staging AS S
                     ON T.unique_row_id = S.unique_row_id
                     WHEN NOT MATCHED THEN
                       INSERT (
