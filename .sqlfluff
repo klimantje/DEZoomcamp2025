@@ -1,0 +1,21 @@
+# type: ignore
+
+# Rule reference:
+#   AL09: aliasing.self_alias.column
+#   AM04: ambiguous.column_count
+#   RF03: references.consistent
+#   ST06: structure.column_order
+
+[sqlfluff]
+templater = dbt
+exclude_rules = AL09, AM04, RF03, ST06
+sql_file_exts = .sql
+verbose = 1
+max_line_length = 79
+
+[sqlfluff:rules:capitalisation.identifiers]  # Unquoted identifiers 
+extended_capitalisation_policy = lower
+
+[sqlfluff:templater:dbt]
+project_dir = ./week_4/taxi_rides_ny
+profiles_dir = ./week_4/taxi_rides_ny

@@ -23,6 +23,7 @@
           "ms-toolsai.vscode-jupyter-powertoys",
           "ms-azuretools.vscode-docker",
           "hashicorp.terraform",
+          "innoverio.vscode-dbt-power-user",
   
       ]
       }

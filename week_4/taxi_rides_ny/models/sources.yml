@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: staging
+    database: "{{ env_var('DBT_DATABASE', 'postgres') }}"
+    schema: "{{ env_var('DBT_SCHEMA', 'public') }}"
+    tables:
+      - name: green_tripdata_dbt_sources          
+      - name: yellow_tripdata_dbt_sources
+      - name: fhv_tripdata_dbt_sources

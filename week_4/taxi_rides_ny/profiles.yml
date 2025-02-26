@@ -1,0 +1,21 @@
+taxi_rides_ny:
+  outputs:
+    dev:
+      dbname: postgres
+      host: postgres
+      pass: k3str4
+      port: 5432
+      schema: taxi_rides_ny
+      threads: 1
+      type: postgres
+      user: kestra
+    prod:
+      dbname: postgres
+      host: postgres
+      pass: k3str4
+      port: 5432
+      schema: taxi_rides_ny_prod
+      threads: 1
+      type: postgres
+      user: kestra
+  target: dev
