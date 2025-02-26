@@ -3,12 +3,13 @@
 with trips_data as (
     select * from {{ ref('fact_trips') }}
 )
-    select 
+
+select
     -- Revenue grouping 
     pickup_zone as revenue_zone,
-    {{ dbt.date_trunc("month", "pickup_datetime") }} as revenue_month, 
+    {{ dbt.date_trunc("month", "pickup_datetime") }} as revenue_month,
 
-    service_type, 
+    service_type,
 
     -- Revenue calculation 
     sum(fare_amount) as revenue_monthly_fare,
@@ -25,6 +26,5 @@ with trips_data as (
     avg(passenger_count) as avg_monthly_passenger_count,
     avg(trip_distance) as avg_monthly_trip_distance
 
-    from trips_data
-    group by 1,2,3
-
+from trips_data
+group by 1, 2, 3

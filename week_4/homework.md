@@ -15,7 +15,12 @@ Data was loaded with [Kestra](../flows/) into postgres and checked the records:
 5. Build the staging models for green/yellow as shown in [here](../../../04-analytics-engineering/taxi_rides_ny/models/staging/)
 6. Build the dimension/fact for taxi_trips joining with `dim_zones`  as shown in [here](../../../04-analytics-engineering/taxi_rides_ny/models/core/fact_trips.sql)
 
-**Note**: If you don't have access to GCP, you can spin up a local Postgres instance and ingest the datasets above
+I am using `dbt-core` for the excercise. 
+
+To reproduce locally:
+
+- I am running from a vscode [devcontainer](../.devcontainer/devcontainer.json) with [docker image](../Dockerfile)
+- [Docker compose file](../compose.yml) includes the necessary postgres and kestra setup
 
 
 ### Question 1: Understanding dbt model resolution
@@ -124,8 +129,8 @@ That all being said, regarding macro above, **select all statements that are tru
 - [X] Setting a value for  `DBT_BIGQUERY_TARGET_DATASET` env var is mandatory, or it'll fail to compile
 - [] Setting a value for `DBT_BIGQUERY_STAGING_DATASET` env var is mandatory, or it'll fail to compile. No, it will default to the target one.
 - [] When using `core`, it materializes in the dataset defined in `DBT_BIGQUERY_TARGET_DATASET`. No, [this is not how dbt handles custom schemas]](https://docs.getdbt.com/docs/build/custom-schemas)
-- [] When using `stg`, it materializes in the dataset defined in `DBT_BIGQUERY_STAGING_DATASET`, or defaults to `DBT_BIGQUERY_TARGET_DATASET` No, [this is not how dbt handles custom schemas]](https://docs.getdbt.com/docs/build/custom-schemas)
-- [] When using `staging`, it materializes in the dataset defined in `DBT_BIGQUERY_STAGING_DATASET`, or defaults to `DBT_BIGQUERY_TARGET_DATASET` No, [this is not how dbt handles custom schemas]](https://docs.getdbt.com/docs/build/custom-schemas)
+- [] When using `stg`, it materializes in the dataset defined in `DBT_BIGQUERY_STAGING_DATASET`, or defaults to `DBT_BIGQUERY_TARGET_DATASET` No, [this is not how dbt handles custom schemas](https://docs.getdbt.com/docs/build/custom-schemas)
+- [] When using `staging`, it materializes in the dataset defined in `DBT_BIGQUERY_STAGING_DATASET`, or defaults to `DBT_BIGQUERY_TARGET_DATASET` No, [this is not how dbt handles custom schemas](https://docs.getdbt.com/docs/build/custom-schemas)
 
 
 ## Serious SQL
@@ -140,62 +145,71 @@ You might want to add some new dimensions `year` (e.g.: 2019, 2020), `quarter` (
 
 ### Question 5: Taxi Quarterly Revenue Growth
 
-1. Create a new model `fct_taxi_trips_quarterly_revenue.sql`
+1. Create a new model [`fct_taxi_trips_quarterly_revenue.sql`](./taxi_rides_ny/models/core/fct_taxi_trips_quarterly_revenue.sql)
 2. Compute the Quarterly Revenues for each year for based on `total_amount`
 3. Compute the Quarterly YoY (Year-over-Year) revenue growth 
   * e.g.: In 2020/Q1, Green Taxi had -12.34% revenue growth compared to 2019/Q1
   * e.g.: In 2020/Q4, Yellow Taxi had +34.56% revenue growth compared to 2019/Q4
 
+
+Outcome of the model:
+
+Yellow: Best 202Q1, Worst 2020 Q2
+Green: Best 2020Q1, Worst 2020 Q2
+
+
 Considering the YoY Growth in 2020, which were the yearly quarters with the best (or less worse) and worst results for green, and yellow
 
-- green: {best: 2020/Q2, worst: 2020/Q1}, yellow: {best: 2020/Q2, worst: 2020/Q1}
-- green: {best: 2020/Q2, worst: 2020/Q1}, yellow: {best: 2020/Q3, worst: 2020/Q4}
-- green: {best: 2020/Q1, worst: 2020/Q2}, yellow: {best: 2020/Q2, worst: 2020/Q1}
-- green: {best: 2020/Q1, worst: 2020/Q2}, yellow: {best: 2020/Q1, worst: 2020/Q2}
-- green: {best: 2020/Q1, worst: 2020/Q2}, yellow: {best: 2020/Q3, worst: 2020/Q4}
+- [ ] green: {best: 2020/Q2, worst: 2020/Q1}, yellow: {best: 2020/Q2, worst: 2020/Q1}
+- [ ] green: {best: 2020/Q2, worst: 2020/Q1}, yellow: {best: 2020/Q3, worst: 2020/Q4}
+- [ ] green: {best: 2020/Q1, worst: 2020/Q2}, yellow: {best: 2020/Q2, worst: 2020/Q1}
+- [X] green: {best: 2020/Q1, worst: 2020/Q2}, yellow: {best: 2020/Q1, worst: 2020/Q2}
+- [ ] green: {best: 2020/Q1, worst: 2020/Q2}, yellow: {best: 2020/Q3, worst: 2020/Q4}
 
 
 ### Question 6: P97/P95/P90 Taxi Monthly Fare
 
-1. Create a new model `fct_taxi_trips_monthly_fare_p95.sql`
-2. Filter out invalid entries (`fare_amount > 0`, `trip_distance > 0`, and `payment_type_description in ('Cash', 'Credit Card')`)
+1. Create a new model [`fct_taxi_trips_monthly_fare_p95.sql`](./taxi_rides_ny/models/core/fct_taxi_trips_monthly_fare_p95.sql)
+2. Filter out invalid entries (`fare_amount > 0`, `trip_distance > 0`, and `payment_type_description in ('Cash', 'Credit card')`)
 3. Compute the **continous percentile** of `fare_amount` partitioning by service_type, year and and month
 
 Now, what are the values of `p97`, `p95`, `p90` for Green Taxi and Yellow Taxi, in April 2020?
 
-- green: {p97: 55.0, p95: 45.0, p90: 26.5}, yellow: {p97: 52.0, p95: 37.0, p90: 25.5}
-- green: {p97: 55.0, p95: 45.0, p90: 26.5}, yellow: {p97: 31.5, p95: 25.5, p90: 19.0}
-- green: {p97: 40.0, p95: 33.0, p90: 24.5}, yellow: {p97: 52.0, p95: 37.0, p90: 25.5}
-- green: {p97: 40.0, p95: 33.0, p90: 24.5}, yellow: {p97: 31.5, p95: 25.5, p90: 19.0}
-- green: {p97: 55.0, p95: 45.0, p90: 26.5}, yellow: {p97: 52.0, p95: 25.5, p90: 19.0}
+We assume the date to be used is again the `pickup_datetime`
+
+![outcome](image.png)
+
+- [ ] green: {p97: 55.0, p95: 45.0, p90: 26.5}, yellow: {p97: 52.0, p95: 37.0, p90: 25.5}
+- [X] green: {p97: 55.0, p95: 45.0, p90: 26.5}, yellow: {p97: 31.5, p95: 25.5, p90: 19.0}
+- [ ] green: {p97: 40.0, p95: 33.0, p90: 24.5}, yellow: {p97: 52.0, p95: 37.0, p90: 25.5}
+- [ ] green: {p97: 40.0, p95: 33.0, p90: 24.5}, yellow: {p97: 31.5, p95: 25.5, p90: 19.0}
+- [ ] green: {p97: 55.0, p95: 45.0, p90: 26.5}, yellow: {p97: 52.0, p95: 25.5, p90: 19.0}
 
 
 ### Question 7: Top #Nth longest P90 travel time Location for FHV
 
 Prerequisites:
 * Create a staging model for FHV Data (2019), and **DO NOT** add a deduplication step, just filter out the entries where `where dispatching_base_num is not null`
-* Create a core model for FHV Data (`dim_fhv_trips.sql`) joining with `dim_zones`. Similar to what has been done [here](../../../04-analytics-engineering/taxi_rides_ny/models/core/fact_trips.sql)
+* Create a [core model for FHV Data](./taxi_rides_ny/models/core/fact_fhv_trips.sql) joining with `dim_zones`. 
 * Add some new dimensions `year` (e.g.: 2019) and `month` (e.g.: 1, 2, ..., 12), based on `pickup_datetime`, to the core model to facilitate filtering for your queries
 
 Now...
-1. Create a new model `fct_fhv_monthly_zone_traveltime_p90.sql`
-2. For each record in `dim_fhv_trips.sql`, compute the [timestamp_diff](https://cloud.google.com/bigquery/docs/reference/standard-sql/timestamp_functions#timestamp_diff) in seconds between dropoff_datetime and pickup_datetime - we'll call it `trip_duration` for this exercise
+1. Create a new model [`fct_fhv_monthly_zone_traveltime_p90.sql`](./taxi_rides_ny/models/core/fct_fhv_monthly_zone_traveltime_p90.sql)
+2. For each record in `fact_fhv_trips.sql`, compute the timestampdiff in seconds between dropoff_datetime and pickup_datetime - we'll call it `trip_duration` for this exercise
 3. Compute the **continous** `p90` of `trip_duration` partitioning by year, month, pickup_location_id, and dropoff_location_id
 
 For the Trips that **respectively** started from `Newark Airport`, `SoHo`, and `Yorkville East`, in November 2019, what are **dropoff_zones** with the 2nd longest p90 trip_duration ?
 
-- LaGuardia Airport, Chinatown, Garment District
-- LaGuardia Airport, Park Slope, Clinton East
-- LaGuardia Airport, Saint Albans, Howard Beach
-- LaGuardia Airport, Rosedale, Bath Beach
-- LaGuardia Airport, Yorkville East, Greenpoint
+We used the [analysis query](./taxi_rides_ny/analyses/p90_ranks.sql)
+
+- [X] LaGuardia Airport, Chinatown, Garment District
+- [ ] LaGuardia Airport, Park Slope, Clinton East
+- [ ] LaGuardia Airport, Saint Albans, Howard Beach
+- [ ] LaGuardia Airport, Rosedale, Bath Beach
+- [ ] LaGuardia Airport, Yorkville East, Greenpoint
 
 
 ## Submitting the solutions
 
 * Form for submitting: https://courses.datatalks.club/de-zoomcamp-2025/homework/hw4
 
-
-## Solution 
-
-* To be published after deadline
