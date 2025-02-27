@@ -9,9 +9,9 @@ For this homework, you will need the following datasets:
 
 Data was loaded with [Kestra](../flows/) into postgres and checked the records:
 
-[x] You should have exactly `7,778,101` records in your Green Taxi table
-[x] You should have exactly `109,047,518` records in your Yellow Taxi table
-[x] You should have exactly `43,244,696` records in your FHV table
+- [X] You should have exactly `7,778,101` records in your Green Taxi table
+- [X] You should have exactly `109,047,518` records in your Yellow Taxi table
+- [X] You should have exactly `43,244,696` records in your FHV table
 5. Build the staging models for green/yellow as shown in [here](../../../04-analytics-engineering/taxi_rides_ny/models/staging/)
 6. Build the dimension/fact for taxi_trips joining with `dim_zones`  as shown in [here](../../../04-analytics-engineering/taxi_rides_ny/models/core/fact_trips.sql)
 
