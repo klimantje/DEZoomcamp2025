@@ -29,3 +29,10 @@ RUN mkdir -p /usr/local/gcloud \
     && /usr/local/gcloud/google-cloud-sdk/install.sh -q
 
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
+
+#Install java
+
+# Install OpenJDK-11
+RUN apt-get update && \
+    apt-get install -y openjdk-17-jre-headless && \
+    apt-get clean;
