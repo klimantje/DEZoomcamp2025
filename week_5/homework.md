@@ -11,7 +11,9 @@ wget https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-10.par
 
 ## Question 1: Install Spark and PySpark
 
-The [Dockerfile](../Dockerfile) was updated to include java.
+The [Dockerfile](../Dockerfile) was updated to include java. We still run everything inside a [devcontainer](../.devcontainer/devcontainer.json)
+
+The homework code can be found in the [notebook](spark.ipynb)
 
 - [X] Install Spark
 - [X] Run PySpark
@@ -20,7 +22,7 @@ The [Dockerfile](../Dockerfile) was updated to include java.
 
 What's the output?
 
-As specified in the `requirements.txt` file, the version displayed is `3.5.1`
+As specified in the `requirements.txt` file, the version displayed is `3.5.1` which corresponds with what was installed.
 
 
 ## Question 2: Yellow October 2024
@@ -43,9 +45,11 @@ How many taxi trips were there on the 15th of October?
 
 Consider only trips that started on the 15th of October.
 
+I get 127,993 for trips that both started and ended on 15th of october.
+
 - [ ] 85,567
 - [ ] 105,567
-- [ ] 125,567
+- [X] 125,567
 - [ ] 145,567
 
 
@@ -55,7 +59,7 @@ What is the length of the longest trip in the dataset in hours?
 
 - [ ] 122
 - [ ] 142
-- [ ] 162
+- [X] 162
 - [ ] 182
 
 
@@ -80,7 +84,7 @@ wget https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv
 
 Using the zone lookup data and the Yellow October 2024 data, what is the name of the LEAST frequent pickup location Zone?
 
-- [ ] Governor's Island/Ellis Island/Liberty Island
+- [X] Governor's Island/Ellis Island/Liberty Island
 - [ ] Arden Heights
 - [ ] Rikers Island
 - [ ] Jamaica Bay
