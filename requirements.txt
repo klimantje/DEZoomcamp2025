@@ -9,3 +9,5 @@ dlt[duckdb]
 dbt-core
 dbt-postgres
 sqlfluff-templater-dbt
+pyspark==3.5.1
+nbstripout

@@ -4,3 +4,5 @@ ny_taxi_postgres_data/
 week_4/logs/dbt.log
 week_4/taxi_rides_ny/.user.yml
 week_4/taxi_rides_ny/package-lock.yml
+week_5/partitioned.parquet/*
+
