@@ -32,6 +32,17 @@ services:
       - 28082:28082
       - 29092:29092
 
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    depends_on:
+      - redpanda-1
+    ports:
+      - "8085:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: redpanda-1:29092
+
   jobmanager:
     build:
       context: .
@@ -46,7 +57,7 @@ services:
     ports:
       - "8081:8081"
     volumes:
-      - ./:/opt/flink/usrlib
+      - ../:/opt/flink/usrlib
       - ./keys/:/var/private/ssl/
       - ./src/:/opt/src
       - .:/workspaces/
@@ -91,6 +102,8 @@ services:
     image: postgres:14
     restart: on-failure
     container_name: "postgres"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
@@ -102,3 +115,10 @@ services:
      - "host.docker.internal:host-gateway" #// Access services on the host machine from within the Docker container
 
 
+  pgadmin: 
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=root
+    ports:
+      - "8080:80"

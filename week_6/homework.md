@@ -13,54 +13,17 @@ For this homework we will be using the Taxi data:
 
 ## Setup
 
-We need:
+We used following services:
 
 - Red Panda
 - Flink Job Manager
 - Flink Task Manager
 - Postgres
+- PgAdmin
 
-It's the same setup as in the [pyflink module](../../../06-streaming/pyflink/), so go there and start docker-compose:
+We used the following docker compose [file](docker-compose.yml) to start the services and 
+a virtual environment for development. 
 
-```bash
-cd ../../../06-streaming/pyflink/
-docker-compose up
-```
-
-(Add `-d` if you want to run in detached mode)
-
-Visit http://localhost:8081 to see the Flink Job Manager
-
-Connect to Postgres with pgcli, pg-admin, [DBeaver](https://dbeaver.io/) or any other tool.
-
-The connection credentials are:
-
-- Username `postgres`
-- Password `postgres`
-- Database `postgres`
-- Host `localhost`
-- Port `5432`
-
-With pgcli, you'll need to run this to connect:
-
-```bash
-pgcli -h localhost -p 5432 -u postgres -d postgres
-```
-
-Run these query to create the Postgres landing zone for the first events and windows:
-
-```sql 
-CREATE TABLE processed_events (
-    test_data INTEGER,
-    event_timestamp TIMESTAMP
-);
-
-CREATE TABLE processed_events_aggregated (
-    event_hour TIMESTAMP,
-    test_data INTEGER,
-    num_hits INTEGER 
-);
-```
 
 ## Question 1: Redpanda version
 
@@ -71,7 +34,8 @@ For that, check the output of the command `rpk help` _inside the container_. The
 Find out what you need to execute based on the `help` output.
 
 What's the version, based on the output of the command you executed? (copy the entire version)
-Via docker desktop we open a terminal in the container and execute
+
+Via docker desktop we open a terminal in the container and execute:
 
 ```
 rpk version
@@ -154,47 +118,14 @@ of the last command?
 
 ## Question 4: Sending the Trip Data
 
-Now we need to send the data to the `green-trips` topic
+Now we need to send the data to the `green-trips` topic.
 
-Read the data, and keep only these columns:
+The code is in [notebook](flink.ipynb)
 
-* `'lpep_pickup_datetime',`
-* `'lpep_dropoff_datetime',`
-* `'PULocationID',`
-* `'DOLocationID',`
-* `'passenger_count',`
-* `'trip_distance',`
-* `'tip_amount'`
-
-Now send all the data using this code:
-
-```python
-producer.send(topic_name, value=message)
-```
-
-For each row (`message`) in the dataset. In this case, `message`
-is a dictionary.
-
-After sending all the messages, flush the data:
-
-```python
-producer.flush()
-```
-
-Use `from time import time` to see the total time 
-
-```python
-from time import time
-
-t0 = time()
-
-# ... your code
-
-t1 = time()
-took = t1 - t0
-```
 
 How much time did it take to send the entire dataset and flush? 
+
+`36.41 s`
 
 
 ## Question 5: Build a Sessionization Window (2 points)
@@ -207,6 +138,44 @@ Now we have the data in the Kafka stream. It's time to process it.
 * Use `lpep_dropoff_datetime` time as your watermark with a 5 second tolerance
 * Which pickup and drop off locations have the longest unbroken streak of taxi trips?
 
+First, we create two tables in postgres through pgadmin:
+
+- A sink for the raw rides for debugging
+```sql
+CREATE TABLE IF NOT EXISTS taxi_rides_green_flink
+(
+lpep_pickup_datetime VARCHAR,
+lpep_dropoff_datetime VARCHAR,
+PULocationID INTEGER,
+DOLocationID INTEGER,
+passenger_count INTEGER,
+trip_distance FLOAT,
+tip_amount FLOAT
+)
+```
+- A sink for the aggregated window rides:
+
+```sql
+CREATE TABLE IF NOT EXISTS rides_aggregated
+(
+window_start TIMESTAMP,
+window_end TIMESTAMP,
+pulocationid INTEGER,
+dolocationid INTEGER,
+num_rides BIGINT
+)
+```
+
+We used the following pyflink code: [session_job](./src/job/session_job.py) and submit this to flink via
+
+```
+docker compose exec jobmanager ./bin/flink run -py /opt/src/job/session_job.py --pyFiles /opt/src
+```
+Now we can find the output in our database:
+
+![output in postgres sink](image.png)
+
+PULocationID and DOLocationID 95 has the longest streaks of trips with a gap less than 5 mins (44).
 
 ## Submitting the solutions
 
